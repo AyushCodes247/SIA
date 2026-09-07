@@ -111,7 +111,8 @@ Stores user identity and authentication information.
   "is_verified": "boolean DEFAULT false",
   "last_login_at": "timestamp",
   "created_at": "timestamp",
-  "updated_at": "timestamp"
+  "updated_at": "timestamp",
+  "email_verified_at": "timestamp"
 }
 ```
 
