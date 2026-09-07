@@ -29,7 +29,15 @@
     "paths": {
       "@/*": ["./src/*"],
       "@configs/*": ["./src/configs/*"],
-      "@routes/*": ["./src/routes/*"]
+      "@routes/*": ["./src/routes/*"],
+      "@controllers/*": ["./src/controllers/*"],
+      "@models/*": ["./src/models/*"],
+      "@schemas/*": ["./schemas/*"],
+      "@utils/*": ["./src/utils/*"],
+      "@services/*": ["./src/services/*"],
+      "@middlewares/*": ["./src/middlewares/*"],
+      "@prompts/*": ["./src/prompts/*"],
+      "@mcps/*": ["./src/mcps/*"]
     }
   }
 }

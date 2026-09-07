@@ -376,8 +376,7 @@ The system shall follow the following operational constraints:
 | --------------- | -------------- |
 | Requirements    | ✅ Complete    |
 | Architecture    | ✅ Complete    |
-| Database Design | ⏳ Planned     |
+| Database Design | ✅ Complete    |
 | API Design      | ✅ Complete    |
-| Development     | ⏳ Not Started |
+| Development     | 🔥 Started     |
 | Testing         | ⏳ Not Started |
-| Deployment      | ⏳ Not Started |
