@@ -32,12 +32,14 @@
       "@routes/*": ["./src/routes/*"],
       "@controllers/*": ["./src/controllers/*"],
       "@models/*": ["./src/models/*"],
-      "@schemas/*": ["./schemas/*"],
+      "@schemas/*": ["./src/schemas/*"],
       "@utils/*": ["./src/utils/*"],
       "@services/*": ["./src/services/*"],
       "@middlewares/*": ["./src/middlewares/*"],
       "@prompts/*": ["./src/prompts/*"],
       "@mcps/*": ["./src/mcps/*"]
     }
-  }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["drizzle.config.ts", "node_modules", "dist"]
 }

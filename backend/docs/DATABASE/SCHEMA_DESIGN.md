@@ -134,8 +134,8 @@ Stores lightweight information about conversations.
 ```json
 {
   "internal_id": "bigserial PRIMARY KEY",
-  "conversation_id": "varchar(50) UNIQUE",
-  "user_public_id": "varchar(50)",
+  "conversation_id": "uuid(50) UNIQUE",
+  "user_public_id": "uuid(50)",
   "title": "varchar(255)",
   "summary": "text",
   "mongo_document_id": "varchar(50)",
