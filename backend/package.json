@@ -27,6 +27,7 @@
     "ioredis": "^6.0.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.4",
+    "multer": "^2.3.0",
     "nodemailer": "^10.0.3",
     "pg": "^8.23.0"
   },
@@ -35,6 +36,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.2.0",
     "@types/node": "^26.4.1",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.23.1",

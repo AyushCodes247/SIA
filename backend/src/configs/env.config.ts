@@ -18,6 +18,7 @@ interface ENV {
   SMTP_SECURE: boolean;
   SMTP_PASSWORD: string;
   MAIL_USER: string;
+  UPLOAD_PATH: string;
 }
 
 const env: ENV = {
@@ -36,7 +37,8 @@ const env: ENV = {
   SMTP_SECURE: Boolean(process.env.SMTP_SECURE!),
   SMTP_PASSWORD: process.env.SMTP_PASSWORD!,
   SMTP_USER: process.env.SMTP_USER!,
-  MAIL_USER: process.env.MAIL_USER!
+  MAIL_USER: process.env.MAIL_USER!,
+  UPLOAD_PATH: process.env.UPLOAD_PATH!,
 };
 
 export default env;

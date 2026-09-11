@@ -1,3 +1,0 @@
-function classify(query:string){
-    
-};
