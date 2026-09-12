@@ -29,6 +29,10 @@
     "paths": {
       "@/*": ["./src/*"],
       "@configs/*": ["./src/configs/*"],
+      "@prompts/*" : ["./src/prompts/*"],
+      "@engines/*" : ["./src/engines/*"],
+      "@schemas/*" : ["./src/schemas/*"],
+      "@services/*" : ["./src/services/*"],
     }
   },
   "include": ["src/**/*"],
