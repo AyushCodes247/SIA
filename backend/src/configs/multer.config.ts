@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
   },
 });
 
-const allowedMimeTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg"];
+const allowedMimeTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg","application/vnd.openxmlformats-officedocument.presentationml.presentation"];
 
 const fileFilter: multer.Options["fileFilter"] = (
   _req: Request,
@@ -50,7 +50,7 @@ const upload = multer({
   fileFilter,
   limits: {
     files: 2,
-    fileSize : 20 * 1024 * 1024
+    fileSize : 30 * 1024 * 1024
   },
 });
 

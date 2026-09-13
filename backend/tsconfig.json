@@ -36,8 +36,7 @@
       "@utils/*": ["./src/utils/*"],
       "@services/*": ["./src/services/*"],
       "@middlewares/*": ["./src/middlewares/*"],
-      "@prompts/*": ["./src/prompts/*"],
-      "@mcps/*": ["./src/mcps/*"]
+      "@pipes/*": ["./src/pipes/*"]
     }
   },
   "include": ["src/**/*"],

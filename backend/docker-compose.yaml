@@ -15,5 +15,16 @@ services:
       - "5672:5672"
       - "15672:15672"
 
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: sia_vector
+    env_file:
+      - .env
+    ports:
+      - "5433:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
 volumes:
   redis-data:
+  pg-data:

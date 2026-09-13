@@ -1,6 +1,4 @@
 import env from "@configs/env.config.js";
-import type { BlockList } from "net";
-import stream from "node:stream";
 
 interface OllamaMessage {
   role: "system" | "user" | "assistant";

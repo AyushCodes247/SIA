@@ -19,6 +19,11 @@ interface ENV {
   SMTP_PASSWORD: string;
   MAIL_USER: string;
   UPLOAD_PATH: string;
+  GEMINI_BASE_URL: string;
+  GEMINI_KEY: string;
+  OLLAMA_BASE_URL: string;
+  OLLAMA_MODEL: string;
+  DATABASE_URL_VECTOR: string;
 }
 
 const env: ENV = {
@@ -39,6 +44,11 @@ const env: ENV = {
   SMTP_USER: process.env.SMTP_USER!,
   MAIL_USER: process.env.MAIL_USER!,
   UPLOAD_PATH: process.env.UPLOAD_PATH!,
+  GEMINI_BASE_URL: process.env.GEMINI_BASE_URL!,
+  GEMINI_KEY: process.env.GEMINI_KEY!,
+  OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL!,
+  OLLAMA_MODEL: process.env.OLLAMA_MODEL!,
+  DATABASE_URL_VECTOR: process.env.DATABASE_URL_VECTOR!,
 };
 
 export default env;
