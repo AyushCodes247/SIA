@@ -1,101 +1,103 @@
-import { randomUUID } from "crypto";
+import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
 import redis from "@configs/redis.config.js";
 import { z } from "zod";
 import classifierEngine from "@engines/classifier.engine.js";
-import imageRagEngine from "@engines/image.engine.js";
-
-const server = new McpServer({
-  name: "sia-mcp",
-  version: "1.0.0",
-});
-
-// real tools
-server.registerTool(
-  "classify_query",
-  {
-    description: "Classifies a user query for SIA orchestration",
-    inputSchema: {
-      query: z.string().min(1),
-    },
-  },
-  async ({ query }) => {
-    const result = await classifierEngine.classify(query);
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: JSON.stringify(result),
-        },
-      ],
-    };
-  },
-);
-
-server.registerTool(
-  "analyze_image",
-  {
-    description:
-      "Analyzes an image using Gemma 4 E4B and returns a detailed textual representation for RAG.",
-    inputSchema: {
-      image: z.string().min(1),
-    },
-  },
-  async ({ image }) => {
-    const result = await imageRagEngine.analyze(image);
-
-    return {
-      content: [
-        {
-          type: "text",
-          text: result,
-        },
-      ],
-    };
-  },
-);
-
-// development testing only
-server.registerTool(
-  "greet",
-  {
-    description: "Returns a greeting message",
-    inputSchema: {
-      name: z.string(),
-    },
-  },
-  async ({ name }) => {
-    return {
-      content: [
-        {
-          type: "text",
-          text: `Hello ${name}! Welcome to SIA MCP.`,
-        },
-      ],
-    };
-  },
-);
+import imageEngine from "@engines/image.engine.js";
 
 const transports = new Map<string, StreamableHTTPServerTransport>();
 
-async function connectMcp() {
+function mcpServerInit() {
+  const server = new McpServer({
+    name: "sia-mcp",
+    version: "1.0.0",
+  });
+
+  // query classifier tool
+  server.registerTool(
+    "query_classifier_engine",
+    {
+      description: "Classifies a user query for SIA orchestration",
+      inputSchema: {
+        query: z.string().min(1),
+      },
+    },
+    async ({ query }) => {
+      const result = await classifierEngine.classify(query);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  // image analysis tool
+  server.registerTool(
+    "image_analysis_engine",
+    {
+      description:
+        "Analyzes an image using Gemma 4 E4B and returns a detailed textual representation for RAG.",
+      inputSchema: {
+        image: z.string().min(1),
+      },
+    },
+    async ({ image }) => {
+      const result = await imageEngine.analyze(image);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: result,
+          },
+        ],
+      };
+    },
+  );
+
+  // development tool
+  server.registerTool(
+    "greet_dev",
+    {
+      description: "greets a user",
+      inputSchema: {
+        name: z.string(),
+      },
+    },
+    async ({ name }) => {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Hello user ${name}`,
+          },
+        ],
+      };
+    },
+  );
+
+  return server;
+}
+
+async function createMcpSession() {
+  const server = mcpServerInit();
+
   const transport = new StreamableHTTPServerTransport({
     sessionIdGenerator: () => randomUUID(),
 
     onsessioninitialized: async (sessionId) => {
-      (await redis.set(
+      await redis.set(
         `mcp:session:${sessionId}`,
-        JSON.stringify({
-          sessionId,
-          createdAt: Date.now(),
-        }),
-      ),
-        {
-          EX: 60 * 60,
-        });
-
+        JSON.stringify({ sessionId, createdAt: Date.now() }),
+        "EX",
+        60 * 60,
+      );
       transports.set(sessionId, transport);
     },
   });
@@ -107,7 +109,7 @@ async function connectMcp() {
 
     transports.delete(sessionId);
 
-    redis.del(`mcp:session:${sessionId}`);
+    await redis.del(`mcp:session:${sessionId}`);
   };
 
   await server.connect(transport);
@@ -118,4 +120,4 @@ async function connectMcp() {
   };
 }
 
-export default connectMcp;
+export { createMcpSession, mcpServerInit, transports };
