@@ -1,41 +1,72 @@
 import { PDFParse } from "pdf-parse";
-import { v4 } from "uuid";
-import { pool } from "@schemas/vector.js";
+import { v4 as uuid } from "uuid";
+
+import vectorDB from "@/vector.js";
+import { docChunks } from "@schemas/vector.schema.js";
+
 import { embedText } from "./embedding.pipe.js";
 
 function chunkText(
   text: string,
   chunkSize: number = 500,
   overlap: number = 50,
-) {
+): string[] {
   const chunks: string[] = [];
+
   let start = 0;
 
   while (start < text.length) {
     const end = Math.min(start + chunkSize, text.length);
-    chunks.push(text.slice(start, end).trim());
+
+    const chunk = text.slice(start, end).trim();
+
+    if (chunk.length > 50) {
+      chunks.push(chunk);
+    }
+
     start += chunkSize - overlap;
   }
 
-  return chunks.filter((chunk) => chunk.length > 50);
+  return chunks;
 }
 
-export async function ingestDocument(filePath: string, filename: string) {
+export async function ingestDocument(
+  filePath: string,
+  filename: string,
+  documentId: string,
+) {
   const parser = new PDFParse({ url: filePath });
-  const { text } = await parser.getText();
-  const chunks = chunkText(text);
 
-  console.info(`Processing ${chunks.length} chunks from ${filename}`);
+  try {
+    const { text } = await parser.getText();
 
-  for (const chunk of chunks) {
-    const embedding = await embedText(chunk);
+    const chunks = chunkText(text);
 
-    await pool.query(
-      `INSERT INTO documents (id, content, embedding, created_at)
-       VALUES ($1, $2, $3, $4::vector)`,
-      [v4(), chunk, JSON.stringify(embedding), Date.now()],
-    );
+    console.info(`Processing ${chunks.length} chunks from ${filename}`);
+
+    for (let index = 0; index < chunks.length; index++) {
+      const chunk = chunks[index];
+
+      if (!chunk) continue;
+
+      const embedding = await embedText(chunk);
+
+      await vectorDB.insert(docChunks).values([
+        {
+          id: uuid(),
+          documentId,
+          content: chunk,
+          embedding,
+          metadata: {
+            filename,
+            chunkIndex: index,
+          },
+        },
+      ]);
+    }
+
+    return chunks.length;
+  } finally {
+    await parser.destroy();
   }
-
-  return chunks.length;
 }

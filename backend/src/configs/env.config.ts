@@ -24,6 +24,7 @@ interface ENV {
   OLLAMA_BASE_URL: string;
   OLLAMA_MODEL: string;
   DATABASE_URL_VECTOR: string;
+  MCP_BASE_URL: string;
 }
 
 const env: ENV = {
@@ -49,6 +50,7 @@ const env: ENV = {
   OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL!,
   OLLAMA_MODEL: process.env.OLLAMA_MODEL!,
   DATABASE_URL_VECTOR: process.env.DATABASE_URL_VECTOR!,
+  MCP_BASE_URL: process.env.MCP_BASE_URL!
 };
 
 export default env;

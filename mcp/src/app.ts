@@ -2,7 +2,7 @@ import express, { type Express } from "express";
 import connectMcp from "@/engine.js";
 
 const app: Express = express();
-app.use(express.json());
+app.use(express.json({ limit : "30mb" }));
 app.use(express.urlencoded({ extended: true }));
 
 const { transport } = await connectMcp();

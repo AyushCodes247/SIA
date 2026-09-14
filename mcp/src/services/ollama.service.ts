@@ -3,6 +3,7 @@ import env from "@configs/env.config.js";
 interface OllamaMessage {
   role: "system" | "user" | "assistant";
   content: string;
+  images?: string[];
 }
 
 interface OllamaResponse {

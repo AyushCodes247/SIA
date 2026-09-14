@@ -8,6 +8,34 @@
       "when": 1788790168352,
       "tag": "0000_new_rage",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789375362079,
+      "tag": "0001_parallel_paladin",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789375536442,
+      "tag": "0002_soft_kinsey_walden",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789376423921,
+      "tag": "0003_flimsy_eddie_brock",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789377881500,
+      "tag": "0004_panoramic_rogue",
+      "breakpoints": true
     }
   ]
 }

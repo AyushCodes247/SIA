@@ -4,6 +4,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import redis from "@configs/redis.config.js";
 import { z } from "zod";
 import classifierEngine from "@engines/classifier.engine.js";
+import imageRagEngine from "@engines/image.engine.js";
 
 const server = new McpServer({
   name: "sia-mcp",
@@ -27,6 +28,29 @@ server.registerTool(
         {
           type: "text",
           text: JSON.stringify(result),
+        },
+      ],
+    };
+  },
+);
+
+server.registerTool(
+  "analyze_image",
+  {
+    description:
+      "Analyzes an image using Gemma 4 E4B and returns a detailed textual representation for RAG.",
+    inputSchema: {
+      image: z.string().min(1),
+    },
+  },
+  async ({ image }) => {
+    const result = await imageRagEngine.analyze(image);
+
+    return {
+      content: [
+        {
+          type: "text",
+          text: result,
         },
       ],
     };

@@ -7,7 +7,7 @@ const GEMINI_BASE_URL = env.GEMINI_BASE_URL;
 const OLLAMA_BASE_URL = env.OLLAMA_BASE_URL;
 const OLLAMA_MODEL = env.OLLAMA_MODEL;
 
-export async function embedText(text: string) {
+export async function embedText(text?: string) {
   try {
     const response = await fetch(
       `${GEMINI_BASE_URL}/gemini-embedding-001:embedContent?key=${GEMINI_KEY}`,
