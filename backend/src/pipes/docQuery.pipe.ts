@@ -1,28 +1,50 @@
-import { pool } from "@schemas/vector.js";
+import { sql } from "drizzle-orm";
+import vectorDB from "@/vector.js";
+import { docChunks } from "@schemas/vector.schema.js";
 import { embedText, generateAnswer } from "./embedding.pipe.js";
 
-export async function queryDocuments(questions: string) {
-  const questionEmbedding = await embedText(questions);
+export async function queryDocument(question: string) {
+  const questionEmbedding = await embedText(question);
 
-  const { rows } = await pool.query(
-    `SELECT content ,
-            1 - (embedding <=> $1::vector) AS similarity
-     FROM documents
-     ORDER BY embedding <=> $1::vector
-     LIMIT 5`,
-    [JSON.stringify(questionEmbedding)],
-  );
+  const vector = `[${questionEmbedding.join(",")}]`;
+
+  const rows = await vectorDB
+    .select({
+      id: docChunks.id,
+      documentId: docChunks.documentId,
+      content: docChunks.content,
+      metadata: docChunks.metadata,
+
+      similarity: sql<number>`1 - (${docChunks.embedding} <=> ${vector}::vector)`,
+    })
+    .from(docChunks)
+    .orderBy(sql`${docChunks.embedding} <=> ${vector}::vector`)
+    .limit(5);
 
   if (rows.length === 0) {
-    return { answer: "No relevant documents found.", sources: [] };
+    return {
+      answer: "No relevant documents found.",
+      sources: [],
+    };
   }
 
-  const context = rows.map((r) => r.content).join("\n\n---\n\n");
-  const answer = await generateAnswer(context, questions);
+  const context = rows.map((row) => row.content).join("\n\n---\n\n");
+
+  const answer = await generateAnswer(context, question);
 
   return {
     answer,
-    sources: [...new Set(rows.map((r) => r.source))],
-    topSimilarity: parseFloat(rows[0].similarity).toFixed(3),
+
+    sources: rows.map((row) => ({
+      docmentId: row.documentId,
+      filename:
+        typeof row.metadata === "object" &&
+        row.metadata !== null &&
+        "filename" in row.metadata
+          ? row.metadata.filename
+          : undefined,
+    })),
+
+    topSimilarity: Number(rows[0]?.similarity ?? 0).toFixed(3),
   };
 }

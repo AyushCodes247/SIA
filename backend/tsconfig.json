@@ -37,7 +37,8 @@
       "@services/*": ["./src/services/*"],
       "@middlewares/*": ["./src/middlewares/*"],
       "@pipes/*": ["./src/pipes/*"],
-      "@mcps/*": ["./src/mcps/*.mcp.ts"]
+      "@mcps/*": ["./src/mcps/*.mcp.ts"],
+      "@sockets/*" : ["./src/sockets/*.socket.ts"]
     }
   },
   "include": ["src/**/*"],

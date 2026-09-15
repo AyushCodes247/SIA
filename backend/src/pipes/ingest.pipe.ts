@@ -1,9 +1,7 @@
 import { PDFParse } from "pdf-parse";
-import { v4 as uuid } from "uuid";
-
+import { v4 as UUID } from "uuid";
 import vectorDB from "@/vector.js";
 import { docChunks } from "@schemas/vector.schema.js";
-
 import { embedText } from "./embedding.pipe.js";
 
 function chunkText(
@@ -12,7 +10,6 @@ function chunkText(
   overlap: number = 50,
 ): string[] {
   const chunks: string[] = [];
-
   let start = 0;
 
   while (start < text.length) {
@@ -32,19 +29,22 @@ function chunkText(
 
 export async function ingestDocument(
   filePath: string,
-  filename: string,
+  fileName: string,
   documentId: string,
+  mimeType: string,
 ) {
-  const parser = new PDFParse({ url: filePath });
+  const parser = new PDFParse({
+    url: filePath,
+  });
 
   try {
     const { text } = await parser.getText();
 
     const chunks = chunkText(text);
 
-    console.info(`Processing ${chunks.length} chunks from ${filename}`);
+    console.info(`Processing ${chunks.length} chunks from ${fileName}`);
 
-    for (let index = 0; index < chunks.length; index++) {
+    for (let index = 0; index <= chunks.length; index++) {
       const chunk = chunks[index];
 
       if (!chunk) continue;
@@ -53,12 +53,13 @@ export async function ingestDocument(
 
       await vectorDB.insert(docChunks).values([
         {
-          id: uuid(),
+          id: UUID(),
           documentId,
           content: chunk,
           embedding,
           metadata: {
-            filename,
+            fileName,
+            mimeType,
             chunkIndex: index,
           },
         },
@@ -66,6 +67,9 @@ export async function ingestDocument(
     }
 
     return chunks.length;
+  } catch (error) {
+    console.error("Error while ingesting document:", error);
+    throw new Error("Error in ingestion.");
   } finally {
     await parser.destroy();
   }

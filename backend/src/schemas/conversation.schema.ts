@@ -64,4 +64,9 @@ export const conversationMetaTable = pgTable("conversation_meta", {
     withTimezone: true,
     mode: "date",
   }),
+
+  archivedAt: timestamp("archived_at", {
+    withTimezone: true,
+    mode: "date",
+  }),
 });
