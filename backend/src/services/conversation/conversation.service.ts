@@ -1,8 +1,7 @@
 import { and, desc, eq, ilike, sql } from "drizzle-orm";
-import db from "@/db.js";
+import db from "@/index.js";
 import { conversationMetaTable } from "@schemas/conversation.schema.js";
 import { AppError } from "@utils/essential.util.js";
-import { compatibilityVersion } from "drizzle-orm/version";
 
 class ConversationService {
   async create({
@@ -224,11 +223,14 @@ class ConversationService {
     conversationId: string;
   }) {
     const [conversation] = await db
-      .delete(conversationMetaTable)
+      .update(conversationMetaTable)
+      .set({
+        deletedAt: new Date(),
+      })
       .where(
         and(
-          eq(conversationMetaTable.userPublicId, userPublicId),
           eq(conversationMetaTable.conversationId, conversationId),
+          eq(conversationMetaTable.userPublicId, userPublicId),
         ),
       )
       .returning({

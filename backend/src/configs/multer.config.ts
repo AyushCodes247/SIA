@@ -9,8 +9,6 @@ import type { Request } from "express";
 
 const uploadPath = env.UPLOAD_PATH;
 
-console.log(uploadPath)
-
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath, { recursive: true });
 }
@@ -29,7 +27,13 @@ const storage = multer.diskStorage({
   },
 });
 
-const allowedMimeTypes = ["application/pdf", "image/jpeg", "image/png", "image/jpg","application/vnd.openxmlformats-officedocument.presentationml.presentation"];
+const allowedMimeTypes = [
+  "application/pdf",
+  "image/jpeg",
+  "image/png",
+  "image/jpg",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+];
 
 const fileFilter: multer.Options["fileFilter"] = (
   _req: Request,
@@ -50,7 +54,7 @@ const upload = multer({
   fileFilter,
   limits: {
     files: 2,
-    fileSize : 30 * 1024 * 1024
+    fileSize: 30 * 1024 * 1024,
   },
 });
 

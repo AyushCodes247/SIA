@@ -5,6 +5,7 @@ import redis from "@configs/redis.config.js";
 import { z } from "zod";
 import classifierEngine from "@engines/classifier.engine.js";
 import imageEngine from "@engines/image.engine.js";
+import answeringEngine from "@engines/answer.engine.js";
 
 const transports = new Map<string, StreamableHTTPServerTransport>();
 
@@ -55,6 +56,63 @@ function mcpServerInit() {
           {
             type: "text",
             text: result,
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "answering_engine",
+    {
+      description:
+        "Generates the final response using the user's query, classification, conversation history, and optional context.",
+
+      inputSchema: {
+        query: z.string(),
+
+        classification: z.object({
+          intent: z.string(),
+          domain: z.string(),
+          realtime: z.boolean(),
+          general: z.boolean(),
+          require_web: z.boolean(),
+          require_tool: z.boolean(),
+          complexity: z.number(),
+          confidence: z.number(),
+        }),
+
+        messages: z.array(
+          z.object({
+            role: z.enum(["system", "user", "assistant", "tool"]),
+            content: z.string(),
+          }),
+        ),
+
+        context: z
+          .object({
+            web: z.unknown().optional(),
+            rag: z.unknown().optional(),
+            memory: z.unknown().optional(),
+            tools: z.unknown().optional(),
+          })
+          .optional(),
+      },
+    },
+
+    async ({ query, classification, messages, context }) => {
+      const result = await answeringEngine.answer({
+        query,
+        classifications: classification,
+        messages,
+        context,
+      });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
           },
         ],
       };

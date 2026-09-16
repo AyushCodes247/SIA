@@ -5,11 +5,11 @@ import redis from "@configs/redis.config.js";
 
 const server = http.createServer(app);
 
-async function startMcpServer(): Promise<void> {
+async function startOrchestrationServer(): Promise<void> {
   await redis.connect();
   server.listen(env.PORT, () => {
-    console.info(`MCP SERVER IS RUNNING ON PORT NO.: ${env.PORT}`);
+    console.info(`ORCHESTRATION SERVER IS RUNNING ON PORT NO.: ${env.PORT}`);
   });
 }
 
-startMcpServer();
+startOrchestrationServer();

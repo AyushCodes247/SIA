@@ -1,7 +1,7 @@
 import { asyncHandler } from "@/utils/essential.util.js";
 import { verifyAccessToken } from "@/utils/auth.util.js";
 import { AppError } from "@utils/essential.util.js";
-import db from "@/db.js";
+import db from "@/index.js"
 import { userTable } from "@schemas/user.schema.js";
 import { eq } from "drizzle-orm";
 

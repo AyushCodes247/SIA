@@ -98,11 +98,11 @@ class ConversationController {
   });
 
   remove = asyncHandler(async (req, res) => {
-    const { coversationId } = req.params;
+    const { conversationId } = req.params;
 
     await conversationService.remove({
       userPublicId: String(req.user?.publicId),
-      conversationId: String(coversationId),
+      conversationId: String(conversationId),
     });
 
     return res.status(204).json({

@@ -1,4 +1,4 @@
-import db from "@/db.js";
+import db from "@/index.js"
 import { eq } from "drizzle-orm";
 import { userTable } from "@schemas/user.schema.js";
 import { AppError } from "@utils/essential.util.js";
