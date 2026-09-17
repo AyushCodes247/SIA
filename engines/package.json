@@ -1,5 +1,5 @@
 {
-  "name": "mcp",
+  "name": "engine",
   "version": "1.0.0",
   "description": "",
   "main": "dist/server.js",
