@@ -12,9 +12,9 @@ export interface AnswerInput {
     domain: string;
     realtime: boolean;
     general: boolean;
-    require_web: boolean;
-    require_tool: boolean;
-    complexity: number;
+    requires_web: boolean;
+    requires_tool: boolean;
+    complexity: string;
   };
 
   messages: Array<{
@@ -70,7 +70,15 @@ class AnsweringEngine {
 
     const response = await ollamaService.chat(messages);
 
-    const parsed = JSON.parse(response.message.content);
+    const rawContent = response.message.content.trim();
+
+    const cleanedContent = rawContent
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+
+    const parsed = JSON.parse(cleanedContent);
 
     return answeringSchema.parse(parsed);
   }

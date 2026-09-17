@@ -76,9 +76,9 @@ function mcpServerInit() {
           domain: z.string(),
           realtime: z.boolean(),
           general: z.boolean(),
-          require_web: z.boolean(),
-          require_tool: z.boolean(),
-          complexity: z.number(),
+          requires_web: z.boolean(),
+          requires_tool: z.boolean(),
+          complexity: z.string(),
           confidence: z.number(),
         }),
 
