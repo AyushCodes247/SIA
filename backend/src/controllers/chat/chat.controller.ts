@@ -1,23 +1,33 @@
+import ChatService from "@services/chat/chat.service.js";
 import { asyncHandler } from "@utils/essential.util.js";
-import { ingestDocument } from "@pipes/ingest.pipe.js";
+import type { Request, Response } from "express";
 
-const chat = asyncHandler(async (req, res) => {
-  const { query } = req.body;
-  const files = req.files as {
-    file?: Express.Multer.File[];
-    image?: Express.Multer.File[];
-  };
+class ChatController {
+  chat = asyncHandler(
+    async (req: Request<{ conversationId: string }>, res: Response) => {
+      const { conversationId } = req.params;
+      const userPublicId = req.user!.publicId;
+      const { message } = req.body;
 
-  if (files?.file) {
-    for (const file of files.file ?? []) {
-      const count = await ingestDocument(file.path, file.filename);
-    }
-  }
+      if (!conversationId || !message) {
+        return res.status(400).json({
+          success: false,
+          message: "ConversationId and message are required.",
+        });
+      }
 
-  if (files?.image) {
-    for (const image of files.image ?? []) {
-    }
-  }
-});
+      const result = await ChatService.chat(
+        conversationId,
+        userPublicId,
+        message,
+      );
 
-export default chat;
+      return res.status(200).json({
+        success: true,
+        data: result,
+      });
+    },
+  );
+}
+
+export default new ChatController();

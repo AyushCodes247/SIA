@@ -33,3 +33,14 @@ export interface BrainResult {
 
   model?: string;
 }
+
+export interface Classification {
+  intent: string;
+  domain: string;
+  realtime: boolean;
+  general: boolean;
+  requires_web: boolean;
+  requires_tool: boolean;
+  complexity: string;
+  confidence: number;
+}

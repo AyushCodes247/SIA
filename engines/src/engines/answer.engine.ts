@@ -1,13 +1,16 @@
 import ollamaService, { type OllamaMessage } from "@services/ollama.service.js";
+
 import {
   answeringSchema,
   type AnsweringResponse,
 } from "@schemas/answer.schema.js";
+
 import { ANSWERING_SYSTEM_PROMPT } from "@prompts/answer.prompt.js";
 
 export interface AnswerInput {
   query: string;
-  classifications: {
+
+  classification: {
     intent: string;
     domain: string;
     realtime: boolean;
@@ -36,7 +39,7 @@ class AnsweringEngine {
       ? JSON.stringify(input.context, null, 2)
       : "No external context is available.";
 
-    const classification = JSON.stringify(input.classifications, null, 2);
+    const classification = JSON.stringify(input.classification, null, 2);
 
     const messages: OllamaMessage[] = [
       {
@@ -54,33 +57,30 @@ class AnsweringEngine {
         })),
 
       {
-        role: "user" as const,
+        role: "user",
         content: `
-        User Query:
-        ${input.query}
+User Query:
 
-        Query Classification:
-        ${classification}
+${input.query}
 
-        Additional Context:
-        ${context}
-        `,
+Query Classification:
+
+${classification}
+
+Additional Context:
+
+${context}
+        `.trim(),
       },
     ];
 
     const response = await ollamaService.chat(messages);
 
-    const rawContent = response.message.content.trim();
+    const content = response.message.content.trim();
 
-    const cleanedContent = rawContent
-      .replace(/^```json\s*/i, "")
-      .replace(/^```\s*/i, "")
-      .replace(/\s*```$/i, "")
-      .trim();
-
-    const parsed = JSON.parse(cleanedContent);
-
-    return answeringSchema.parse(parsed);
+    return answeringSchema.parse({
+      content,
+    });
   }
 }
 

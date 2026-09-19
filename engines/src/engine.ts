@@ -6,6 +6,8 @@ import { z } from "zod";
 import classifierEngine from "@engines/classifier.engine.js";
 import imageEngine from "@engines/image.engine.js";
 import answeringEngine from "@engines/answer.engine.js";
+import WebEngine from "@engines/web.engine.js";
+import { webSchema } from "@schemas/web.schema.js";
 
 const transports = new Map<string, StreamableHTTPServerTransport>();
 
@@ -63,6 +65,26 @@ function mcpServerInit() {
   );
 
   server.registerTool(
+    "web_search_engine",
+    {
+      description: "Search the web for relevant and up-to-date information.",
+      inputSchema: webSchema,
+    },
+    async (input) => {
+      const result = await WebEngine.execute(input);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
     "answering_engine",
     {
       description:
@@ -103,7 +125,7 @@ function mcpServerInit() {
     async ({ query, classification, messages, context }) => {
       const result = await answeringEngine.answer({
         query,
-        classifications: classification,
+        classification: classification,
         messages,
         context,
       });

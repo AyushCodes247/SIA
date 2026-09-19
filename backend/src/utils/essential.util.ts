@@ -1,16 +1,18 @@
 import type { Request, Response, NextFunction } from "express";
 
-type AsyncRequestHandler = (
-  req: Request,
+type AsyncRequestHandler<P = Record<string, string>> = (
+  req: Request<P>,
   res: Response,
   next: NextFunction,
 ) => Promise<unknown>;
 
-export const asyncHandler =
-  (fn: AsyncRequestHandler) =>
-  (req: Request, res: Response, next: NextFunction) => {
+export const asyncHandler = <P = Record<string, string>>(
+  fn: AsyncRequestHandler<P>,
+) => {
+  return (req: Request<P>, res: Response, next: NextFunction) => {
     return Promise.resolve(fn(req, res, next)).catch(next);
   };
+};
 
 export class AppError extends Error {
   public readonly statusCode: number;

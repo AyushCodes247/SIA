@@ -8,6 +8,7 @@ interface ENV {
   REDIS_PASSWORD: string;
   OLLAMA_BASE_URL: string;
   OLLAMA_MODEL: string;
+  TAVILY_TOKEN: string;
 }
 
 const env: ENV = {
@@ -16,7 +17,8 @@ const env: ENV = {
   REDIS_HOST: process.env.REDIS_HOST!,
   REDIS_PASSWORD: process.env.REDIS_PASSWORD!,
   OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL!,
-  OLLAMA_MODEL: process.env.OLLAMA_MODEL!
+  OLLAMA_MODEL: process.env.OLLAMA_MODEL!,
+  TAVILY_TOKEN: process.env.TAVILY_TOKEN!,
 };
 
 export default env;

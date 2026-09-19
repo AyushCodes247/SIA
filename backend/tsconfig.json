@@ -38,7 +38,8 @@
       "@middlewares/*": ["./src/middlewares/*"],
       "@pipes/*": ["./src/pipes/*"],
       "@mcps/*": ["./src/mcps/*.mcp.ts"],
-      "@sockets/*" : ["./src/sockets/*.socket.ts"]
+      "@sockets/*" : ["./src/sockets/*.socket.ts"],
+      "@brain/*" : ["./src/brain/*.ts"]
     }
   },
   "include": ["src/**/*"],
