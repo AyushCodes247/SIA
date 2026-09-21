@@ -74,13 +74,20 @@ ${context}
       },
     ];
 
-    const response = await ollamaService.chat(messages);
+    const response = await ollamaService.chat(messages, "json");
 
-    const content = response.message.content.trim();
+    console.log("ANSWER OLLAMA RESPONSE:", response);
+    console.log("ANSWER OLLAMA CONTENT:", response.message.content);
 
-    return answeringSchema.parse({
-      content,
-    });
+    const cleanedText = response.message.content
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
+
+    const parsedResponse = JSON.parse(cleanedText);
+    
+    return answeringSchema.parse(parsedResponse);
   }
 }
 

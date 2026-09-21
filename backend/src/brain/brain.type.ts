@@ -43,4 +43,7 @@ export interface Classification {
   requires_tool: boolean;
   complexity: string;
   confidence: number;
+
+  needs_clarification: boolean;
+  clarification_reason?: string;
 }

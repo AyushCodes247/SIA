@@ -1,6 +1,7 @@
 import mcpClient from "@mcps/client";
 
 import BrainContextManager from "./brain.context.js";
+
 import BrainRouter from "./brain.router.js";
 
 import type {
@@ -9,6 +10,9 @@ import type {
   BrainResult,
   Classification,
 } from "./brain.type.js";
+
+import MemoryRetriveEngine from "@pipes/retrieve.pipe.js";
+import MemoryStoreEngine from "@brain/memory.store.js";
 
 class BrainService {
   async braining(input: BrainInput): Promise<BrainResult> {
@@ -21,6 +25,19 @@ class BrainService {
 
     const classification =
       this.parseMCPResponse<Classification>(classificationResult);
+
+    console.log("CLASSIFICATION:", classification);
+
+    if (classification.needs_clarification) {
+      return {
+        content: classification.clarification_reason
+          ? `Could you clarify your request? ${classification.clarification_reason}`
+          : "Could you clarify your request?",
+        sources: undefined,
+        toolExecutions: undefined,
+        model: undefined,
+      };
+    }
 
     let context: BrainContext = BrainContextManager.create();
 
@@ -57,7 +74,17 @@ class BrainService {
         }
 
         case "MEMORY": {
-          // Memory integration later
+          const memoryResult = await MemoryRetriveEngine.execute({
+            userPublicId: input.userPublicId,
+            query: input.message,
+            topK: 5,
+            similarityThreshold: 0.7,
+          });
+
+          console.log("MEMORY RESULT:", memoryResult);
+
+          context = BrainContextManager.addMemoryContext(context, memoryResult);
+
           break;
         }
 
@@ -77,11 +104,68 @@ class BrainService {
             },
           );
 
+          console.log("ANSWERING ENGINE RAW RESULT:", answeringResult);
+
           const answer = this.parseMCPResponse<{
             content: string;
           }>(answeringResult);
 
+          console.log("PARSED ANSWER:", answer);
+
           const normalizedAnswer = this.normalizeBrainResult(answer);
+
+          console.log("NORMALIZED ANSWER:", normalizedAnswer);
+
+          const memoryInput = [
+            {
+              role: "user",
+              content: input.message,
+            },
+            {
+              role: "assistant",
+              content: normalizedAnswer.content,
+            },
+          ];
+
+          try {
+            const memoryResult = await mcpClient.callTools("memory_engine", {
+              operation: "store",
+              query: JSON.stringify(memoryInput),
+            });
+
+            const extractedMemory = this.parseMCPResponse<{
+              shouldStore: boolean;
+              memories: Array<{
+                content: string;
+                category: string;
+                importance: number;
+              }>;
+            }>(memoryResult);
+
+            console.log("EXTRACTED MEMORY:", extractedMemory);
+
+            if (
+              extractedMemory.shouldStore &&
+              extractedMemory.memories.length > 0
+            ) {
+              for (const memory of extractedMemory.memories) {
+                const storedMemory = await MemoryStoreEngine.execute({
+                  userPublicId: input.userPublicId,
+                  content: memory.content,
+                  category: memory.category,
+                  importance: memory.importance,
+                });
+
+                console.log("memory stored:", storedMemory);
+              }
+
+              console.log(
+                `Stored ${extractedMemory.memories.length} memory/memories.`,
+              );
+            }
+          } catch (error) {
+            console.error("Memory extraction/storage failed:", error);
+          }
 
           const webContext = context.web as
             | {
@@ -160,7 +244,7 @@ class BrainService {
     try {
       return JSON.parse(cleanedText) as T;
     } catch {
-      return cleanedText as T;
+      throw new Error(`MCP response is not valid JSON: ${cleanedText}`);
     }
   }
 }

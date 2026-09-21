@@ -8,6 +8,8 @@ import imageEngine from "@engines/image.engine.js";
 import answeringEngine from "@engines/answer.engine.js";
 import WebEngine from "@engines/web.engine.js";
 import { webSchema } from "@schemas/web.schema.js";
+import MemoryEngine from "@engines/memory.engine.js";
+import { memorySchema } from "@schemas/memory.schema.js";
 
 const transports = new Map<string, StreamableHTTPServerTransport>();
 
@@ -72,6 +74,27 @@ function mcpServerInit() {
     },
     async (input) => {
       const result = await WebEngine.execute(input);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "memory_engine",
+    {
+      description:
+        "Extract and process information that may be useful as long-term memory.",
+      inputSchema: memorySchema,
+    },
+    async (input) => {
+      const result = await MemoryEngine.execute(input);
 
       return {
         content: [

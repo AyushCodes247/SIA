@@ -12,6 +12,7 @@ interface OllamaResponse {
   message: {
     role: "assistant";
     content: string;
+    thinking?:string;
   };
   done: boolean;
   done_reason?: string;
@@ -33,7 +34,10 @@ class OllamaService {
     this.model = env.OLLAMA_MODEL;
   }
 
-  async chat(messages: OllamaMessage[]): Promise<OllamaResponse> {
+  async chat(
+    messages: OllamaMessage[],
+    format?: "json",
+  ): Promise<OllamaResponse> {
     const response = await fetch(`${this.url}/api/chat`, {
       method: "POST",
       headers: {
@@ -43,6 +47,8 @@ class OllamaService {
         model: this.model,
         stream: false,
         messages,
+        think: false,
+        ...(format && { format }),
       }),
     });
 

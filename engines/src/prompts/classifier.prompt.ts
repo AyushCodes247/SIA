@@ -269,6 +269,152 @@ Use lower confidence when the query is ambiguous.
 If classification is uncertain, use "unknown" where appropriate.
 
 Do NOT use confidence = 1.0 unless the classification is extremely clear.
+ ==================================================
+ CLARIFICATION
+ ==================================================
+
+ needs_clarification determines whether the USER QUERY itself
+ is sufficiently specific for SIA to determine the intended operation.
+
+ IMPORTANT:
+ needs_clarification is NOT about whether SIA currently knows the answer.
+ needs_clarification is NOT about whether the requested information
+ is currently available in memory, files, web results, or tools.
+
+ SIA's Brain is responsible for retrieving information and executing
+ the appropriate operation after classification.
+
+ Set needs_clarification = true ONLY when the user's request is
+ genuinely ambiguous or a required input for the requested operation
+ is missing.
+
+ Set needs_clarification = true when:
+
+ - The query contains an ambiguous entity and multiple plausible
+   entities could match the request.
+ - A required piece of information is missing from the user's request.
+ - The query has multiple materially different interpretations
+   that cannot be resolved from the available query context.
+ - The requested action requires a target, parameter, or detail
+   that the user has not provided.
+ - Proceeding without clarification could result in an inaccurate
+   answer or unintended action.
+
+ Set needs_clarification = false when SIA can determine the user's
+ intended operation and the Brain can obtain the required information
+ through memory, web search, RAG, tools, or another available source.
+
+ ==================================================
+ MEMORY RETRIEVAL RULES
+ ==================================================
+
+ If the user asks about something that may have been previously
+ stored as a personal memory, classify the query as memory_retrieve.
+
+ Do NOT set needs_clarification = true merely because:
+
+ - The requested information is personal.
+ - The requested information is not present in the current query.
+ - SIA does not currently know the answer.
+ - SIA has not retrieved the memory yet.
+ - The answer must be obtained from the memory system.
+ - The assistant has no direct knowledge of the user's personal information.
+
+ The purpose of memory_retrieve is specifically to allow the Brain
+ to retrieve previously stored information.
+
+ Example:
+
+ User:
+ "What is my main AI project?"
+
+ Output:
+ {
+   "intent": "memory_retrieve",
+   "domain": "personal",
+   "realtime": false,
+   "general": false,
+   "requires_web": false,
+   "requires_tool": false,
+   "complexity": "low",
+   "confidence": 0.95,
+   "needs_clarification": false,
+   "clarification_reason": ""
+ }
+
+ Example:
+
+ User:
+ "What do you remember about my projects?"
+
+ Output:
+ {
+   "intent": "memory_retrieve",
+   "domain": "personal",
+   "realtime": false,
+   "general": false,
+   "requires_web": false,
+   "requires_tool": false,
+   "complexity": "low",
+   "confidence": 0.95,
+   "needs_clarification": false,
+   "clarification_reason": ""
+ }
+
+ ==================================================
+ GENERAL CLARIFICATION EXAMPLES
+ ==================================================
+
+ "What is the current stock price of Tata?"
+ → needs_clarification: true
+ → clarification_reason: "Which Tata Group company do you mean?"
+
+ "What's John's email?"
+ → needs_clarification: true
+ → clarification_reason: "Which John do you mean?"
+
+ "Delete the project."
+ → needs_clarification: true
+ → clarification_reason: "Which project do you want to delete?"
+
+ "What is the current stock price of TCS?"
+ → needs_clarification: false
+ → clarification_reason: ""
+
+ "Explain how REST APIs work."
+ → needs_clarification: false
+ → clarification_reason: ""
+
+ "What is the latest Node.js version?"
+ → needs_clarification: false
+ → clarification_reason: ""
+
+ "How do I create a REST API in Express?"
+ → needs_clarification: false
+ → clarification_reason: ""
+
+ ==================================================
+ CLARIFICATION OUTPUT RULES
+ ==================================================
+
+ When needs_clarification = true:
+
+ - clarification_reason MUST be a concise, specific explanation
+   of what information is missing or ambiguous.
+ - Do NOT answer the original query.
+ - Do NOT invent the missing information.
+ - Ask only for the information necessary to proceed.
+
+ When needs_clarification = false:
+
+ - clarification_reason MUST be an empty string "".
+
+ The following fields are ALWAYS mandatory:
+
+ - needs_clarification
+ - clarification_reason
+
+ALWAYS return both fields.
 
 ==================================================
 DECISION RULES
@@ -276,44 +422,17 @@ DECISION RULES
 
 - Classify ONLY from information present in the query.
 - Never invent information.
-- Never invent enum values.
 - Choose exactly ONE intent.
+- Never invent enum values.
 - Choose exactly ONE domain.
 - Choose the most specific valid classification.
 - Choose the PRIMARY user goal.
 - realtime and requires_web are independent concepts.
 - general and realtime are usually opposite for information queries,
-  but classify each according to its definition.
+   but classify each according to its definition.
 - requires_tool refers to actual SIA execution.
 - Do NOT treat every programming query as a tool requirement.
 - Do NOT treat reasoning as a tool requirement.
 - Do NOT answer the user's query.
-
-==================================================
-OUTPUT RULES
-==================================================
-
-- Output JSON ONLY.
-- No Markdown.
-- No code fences.
-- No explanations.
-- No comments.
-- No extra fields.
-- No missing fields.
-- Use ONLY values allowed by the schema.
-- Return exactly one JSON object.
-- Do not output anything before or after the JSON.
-
-REQUIRED OUTPUT:
-
-{
-  "intent": "explanation",
-  "domain": "education",
-  "realtime": false,
-  "general": true,
-  "requires_web": false,
-  "requires_tool": false,
-  "complexity": "low",
-  "confidence": 0.95
-}
-`;
+- Determine needs_clarification independently from confidence.
+- A query can have high classification confidence but still require clarification.`;

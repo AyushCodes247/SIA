@@ -2,7 +2,7 @@ import { ConversationModel } from "@models/conversation.model.js";
 import { conversationMetaTable } from "@schemas/conversation.schema.js";
 import db from "@/index.js";
 
-import BrainService from "@brain/brain.service";
+import BrainService from "@brain/brain.service.js";
 
 import { AppError } from "@utils/essential.util.js";
 
@@ -74,7 +74,15 @@ class ChatService {
       messages,
     });
 
-    console.log("Result from llm:", result);
+    console.log("BRAIN RESULT:", result);
+    console.log("BRAIN CONTENT:", result.content);
+
+    if (
+      typeof result.content !== "string" ||
+      result.content.trim().length === 0
+    ) {
+      throw new AppError("Brain returned an invalid response.", 500);
+    }
 
     messages.push({
       messageId: crypto.randomUUID(),

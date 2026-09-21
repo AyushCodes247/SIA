@@ -39,7 +39,7 @@
       "@pipes/*": ["./src/pipes/*"],
       "@mcps/*": ["./src/mcps/*.mcp.ts"],
       "@sockets/*" : ["./src/sockets/*.socket.ts"],
-      "@brain/*" : ["./src/brain/*.ts"]
+      "@brain/*" : ["./src/brain/*"]
     }
   },
   "include": ["src/**/*"],

@@ -63,6 +63,10 @@ export const classifierSchema = z.object({
   complexity: z.enum(["low", "medium", "high"]),
 
   confidence: z.number(),
+
+  needs_clarification: z.boolean(),
+
+  clarification_reason: z.string().optional(),
 });
 
 export type ClassifierResult = z.infer<typeof classifierSchema>;
