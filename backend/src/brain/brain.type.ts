@@ -1,11 +1,18 @@
-import type { IMessage } from "@models/conversation.model.js";
+import type {
+  IMessage,
+  IAttachment,
+  ISource,
+  IToolExecution,
+} from "@models/conversation.model.js";
 
 export interface BrainInput {
   conversationId: string;
+
   userPublicId: string;
+
   message: string;
   messages: IMessage[];
-  attachments?: string[];
+  attachments?: IAttachment[];
 }
 
 export interface BrainContext {
@@ -17,19 +24,8 @@ export interface BrainContext {
 
 export interface BrainResult {
   content: string;
-
-  sources?: Array<{
-    title: string;
-    url?: string;
-    type: "web" | "pdf" | "image" | "memory" | "tool";
-  }>;
-
-  toolExecutions?: Array<{
-    tool: string;
-    input: Record<string, unknown>;
-    output: Record<string, unknown>;
-    status: "SUCCESS" | "FAILED";
-  }>;
+  sources?: ISource[];
+  toolExecutions?: IToolExecution[];
 
   model?: string;
 }
@@ -43,7 +39,6 @@ export interface Classification {
   requires_tool: boolean;
   complexity: string;
   confidence: number;
-
   needs_clarification: boolean;
   clarification_reason?: string;
 }

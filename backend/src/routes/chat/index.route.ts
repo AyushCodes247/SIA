@@ -8,3 +8,5 @@ export const router: Router = Router();
 router.use(verifyUser);
 
 router.post("/:conversationId", ChatController.chat);
+
+router.post("/:conversationId/uploads", upload.single("file"), ChatController.upload);

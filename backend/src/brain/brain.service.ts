@@ -13,6 +13,7 @@ import type {
 
 import MemoryRetriveEngine from "@pipes/retrieve.pipe.js";
 import MemoryStoreEngine from "@brain/memory.store.js";
+import RagRetrieveEngine from "@pipes/rag.engine.js";
 
 class BrainService {
   async braining(input: BrainInput): Promise<BrainResult> {
@@ -28,7 +29,14 @@ class BrainService {
 
     console.log("CLASSIFICATION:", classification);
 
-    if (classification.needs_clarification) {
+    const hasAttachments =
+      Array.isArray(input.attachments) && input.attachments.length > 0;
+
+    console.log("BRAIN INPUT ATTACHMENTS:", input.attachments);
+
+    console.log("HAS ATTACHMENTS:", hasAttachments);
+
+    if (classification.needs_clarification && !hasAttachments) {
       return {
         content: classification.clarification_reason
           ? `Could you clarify your request? ${classification.clarification_reason}`
@@ -41,7 +49,9 @@ class BrainService {
 
     let context: BrainContext = BrainContextManager.create();
 
-    const routes = BrainRouter.router(classification);
+    let ragHasContext = false;
+
+    const routes = BrainRouter.router(classification, input);
 
     for (const route of routes) {
       switch (route) {
@@ -69,7 +79,32 @@ class BrainService {
         }
 
         case "RAG": {
-          // RAG integration later
+          const documentIds = input.attachments
+            ?.map((attachment) => attachment.documentId)
+            .filter(Boolean);
+
+          const ragResult = await RagRetrieveEngine.execute({
+            userPublicId: input.userPublicId,
+            conversationId: input.conversationId,
+            query: input.message,
+            documentIds: documentIds?.length ? documentIds : undefined,
+            topK: 5,
+            similarityThreshold: 0,
+          });
+
+          console.log("RAG RESULT:", ragResult);
+
+          console.dir(ragResult, {
+            depth: null,
+          });
+
+          ragHasContext =
+            Array.isArray(ragResult.chunks) && ragResult.chunks.length > 0;
+
+          console.log("RAG HAS CONTEXT:", ragHasContext);
+
+          context = BrainContextManager.addRagContext(context, ragResult);
+
           break;
         }
 
@@ -94,11 +129,19 @@ class BrainService {
         }
 
         case "ANSWER": {
+          const effectiveClassification = ragHasContext
+            ? {
+                ...classification,
+                needs_clarification: false,
+                clarification_reason: "",
+              }
+            : classification;
+
           const answeringResult = await mcpClient.callTools(
             "answering_engine",
             {
               query: input.message,
-              classification: classification,
+              classification: effectiveClassification,
               messages: input.messages,
               context,
             },

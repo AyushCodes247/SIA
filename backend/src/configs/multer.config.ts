@@ -1,24 +1,29 @@
 import multer, { type FileFilterCallback } from "multer";
-import fs from "fs";
-import path from "path";
-import crypto from "crypto";
+import fs from "node:fs";
+import path from "node:path";
+import crypto from "node:crypto";
+
+import type { Request } from "express";
 
 import env from "@configs/env.config.js";
 import { AppError } from "@utils/essential.util.js";
-import type { Request } from "express";
 
 const uploadPath = env.UPLOAD_PATH;
 
+const MAX_FILE_SIZE = 50 * 1024 * 1024;
+
 if (!fs.existsSync(uploadPath)) {
-  fs.mkdirSync(uploadPath, { recursive: true });
+  fs.mkdirSync(uploadPath, {
+    recursive: true,
+  });
 }
 
 const storage = multer.diskStorage({
-  destination: (req: Request, file: Express.Multer.File, cb) => {
+  destination: (_req: Request, _file: Express.Multer.File, cb) => {
     cb(null, uploadPath);
   },
 
-  filename: (req: Request, file: Express.Multer.File, cb) => {
+  filename: (_req: Request, file: Express.Multer.File, cb) => {
     const extension = path.extname(file.originalname).toLowerCase();
 
     const fileName = `${Date.now()}-${crypto.randomUUID()}${extension}`;
@@ -27,22 +32,28 @@ const storage = multer.diskStorage({
   },
 });
 
-const allowedMimeTypes = [
+const allowedMimeTypes = new Set([
   "application/pdf",
+
   "image/jpeg",
   "image/png",
-  "image/jpg",
-  "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-];
+  "image/webp",
+
+  "text/plain",
+  "text/markdown",
+]);
 
 const fileFilter: multer.Options["fileFilter"] = (
   _req: Request,
   file: Express.Multer.File,
   cb: FileFilterCallback,
 ) => {
-  if (!allowedMimeTypes.includes(file.mimetype)) {
+  if (!allowedMimeTypes.has(file.mimetype)) {
     return cb(
-      new AppError("Only PDF, PNG and JPEG images and files are allowed.", 400),
+      new AppError(
+        "Only PDF, PNG, JPEG, WEBP, TXT and MD files are allowed.",
+        400,
+      ),
     );
   }
 
@@ -51,10 +62,12 @@ const fileFilter: multer.Options["fileFilter"] = (
 
 const upload = multer({
   storage,
+
   fileFilter,
+
   limits: {
-    files: 2,
-    fileSize: 30 * 1024 * 1024,
+    files: 1,
+    fileSize: MAX_FILE_SIZE,
   },
 });
 

@@ -1,16 +1,23 @@
-import type { Classification } from "./brain.type.js";
+import type { Classification, BrainInput } from "./brain.type.js";
 
 export type BrainRouterType = "ANSWER" | "WEB" | "RAG" | "MEMORY" | "TOOL";
 
 class BrainRouter {
-  router(classifiaction: Classification): BrainRouterType[] {
+  router(classifiaction: Classification, input: BrainInput): BrainRouterType[] {
     const routes: BrainRouterType[] = [];
 
     if (classifiaction.requires_web || classifiaction.realtime) {
       routes.push("WEB");
     }
 
-    if (classifiaction.intent === "file_analysis") {
+    const hasAttachments =
+      Array.isArray(input.attachments) && input.attachments.length > 0;
+
+    if (
+      classifiaction.intent === "file_analysis" ||
+      classifiaction.intent === "image_analysis" ||
+      hasAttachments
+    ) {
       routes.push("RAG");
     }
 

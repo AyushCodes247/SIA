@@ -1,17 +1,40 @@
 import { ConversationModel } from "@models/conversation.model.js";
+
 import { conversationMetaTable } from "@schemas/conversation.schema.js";
+
+import { docMetaTable } from "@schemas/document.schema.js";
+
 import db from "@/index.js";
 
 import BrainService from "@brain/brain.service.js";
 
+import { ingestDocument } from "@pipes/ingest.pipe.js";
+
 import { AppError } from "@utils/essential.util.js";
 
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull, inArray } from "drizzle-orm";
 
-import crypto from "crypto";
+import crypto from "node:crypto";
+
+interface UploadAttachmentInput {
+  userPublicId: string;
+
+  conversationId: string;
+
+  file: Express.Multer.File;
+}
+
+interface ChatAttachmentInput {
+  documentId: string;
+}
 
 class ChatService {
-  async chat(conversationId: string, userPublicId: string, message: string) {
+  async chat(
+    conversationId: string,
+    userPublicId: string,
+    message: string,
+    attachmentInputs: ChatAttachmentInput[] = [],
+  ) {
     const [conversationMeta] = await db
       .select()
       .from(conversationMetaTable)
@@ -26,6 +49,12 @@ class ChatService {
     if (!conversationMeta) {
       throw new AppError("Conversation not found.", 404);
     }
+
+    const attachments = await this.resolveAttachments(
+      userPublicId,
+      conversationId,
+      attachmentInputs,
+    );
 
     let conversation;
 
@@ -64,6 +93,9 @@ class ChatService {
       messageId: crypto.randomUUID(),
       role: "user",
       content: message,
+      attachments,
+      sources: [],
+      toolExecutions: [],
       timestamp: new Date(),
     });
 
@@ -72,9 +104,11 @@ class ChatService {
       userPublicId,
       message,
       messages,
+      attachments,
     });
 
     console.log("BRAIN RESULT:", result);
+
     console.log("BRAIN CONTENT:", result.content);
 
     if (
@@ -88,10 +122,11 @@ class ChatService {
       messageId: crypto.randomUUID(),
       role: "assistant",
       content: result.content,
-      timestamp: new Date(),
-      sources: result.sources,
-      toolExecutions: result.toolExecutions,
+      attachments: [],
+      sources: result.sources ?? [],
+      toolExecutions: result.toolExecutions ?? [],
       model: result.model,
+      timestamp: new Date(),
     });
 
     conversation.messages = messages;
@@ -104,6 +139,134 @@ class ChatService {
       toolExecutions: result.toolExecutions,
       model: result.model,
     };
+  }
+
+  async uploadAttachment({
+    userPublicId,
+    conversationId,
+    file,
+  }: UploadAttachmentInput) {
+    const [conversation] = await db
+      .select({
+        conversationId: conversationMetaTable.conversationId,
+      })
+      .from(conversationMetaTable)
+      .where(
+        and(
+          eq(conversationMetaTable.conversationId, conversationId),
+          eq(conversationMetaTable.userPublicId, userPublicId),
+        ),
+      )
+      .limit(1);
+
+    if (!conversation) {
+      throw new AppError("Conversation not found.", 404);
+    }
+
+    const [document] = await db
+      .insert(docMetaTable)
+      .values({
+        userPublicId,
+        conversationId,
+        fileName: file.originalname,
+        mimeType: file.mimetype,
+        fileSize: file.size,
+        storageUri: file.path,
+        status: "UPLOADED",
+      })
+      .returning({
+        documentId: docMetaTable.documentId,
+        fileName: docMetaTable.fileName,
+        mimeType: docMetaTable.mimeType,
+        fileSize: docMetaTable.fileSize,
+        storageUri: docMetaTable.storageUri,
+      });
+
+    if (!document) {
+      throw new AppError("Failed to create document metadata.", 500);
+    }
+
+    try {
+      await db
+        .update(docMetaTable)
+        .set({
+          status: "PROCESSING",
+        })
+        .where(eq(docMetaTable.documentId, document.documentId));
+
+      await ingestDocument(
+        file.path,
+        document.fileName,
+        document.documentId,
+        document.mimeType,
+      );
+
+      await db
+        .update(docMetaTable)
+        .set({
+          status: "READY",
+        })
+        .where(eq(docMetaTable.documentId, document.documentId));
+    } catch (error) {
+      await db
+        .update(docMetaTable)
+        .set({
+          status: "FAILED",
+        })
+        .where(eq(docMetaTable.documentId, document.documentId));
+
+      console.error(`RAG ingestion failed for ${document.documentId}:`, error);
+
+      throw new AppError("Failed to process uploaded document.", 500);
+    }
+
+    return {
+      documentId: document.documentId,
+      fileName: document.fileName,
+      mimeType: document.mimeType,
+      fileSize: document.fileSize,
+    };
+  }
+
+  private async resolveAttachments(
+    userPublicId: string,
+    conversationId: string,
+    attachmentInputs: ChatAttachmentInput[],
+  ) {
+    if (attachmentInputs.length === 0) {
+      return [];
+    }
+
+    const documentIds = [
+      ...new Set(attachmentInputs.map((attachment) => attachment.documentId)),
+    ];
+
+    const documents = await db
+      .select({
+        documentId: docMetaTable.documentId,
+        fileName: docMetaTable.fileName,
+        mimeType: docMetaTable.mimeType,
+        storageUri: docMetaTable.storageUri,
+      })
+      .from(docMetaTable)
+      .where(
+        and(
+          eq(docMetaTable.userPublicId, userPublicId),
+          eq(docMetaTable.conversationId, conversationId),
+          eq(docMetaTable.status, "READY"),
+          isNull(docMetaTable.deletedAt),
+          inArray(docMetaTable.documentId, documentIds),
+        ),
+      );
+
+    if (documents.length !== documentIds.length) {
+      throw new AppError(
+        "One or more attachments are invalid or not ready.",
+        400,
+      );
+    }
+
+    return documents;
   }
 }
 

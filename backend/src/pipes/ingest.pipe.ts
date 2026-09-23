@@ -1,76 +1,64 @@
-import { PDFParse } from "pdf-parse";
 import { v4 as UUID } from "uuid";
 import vectorDB from "@/vector.js";
 import { docChunks } from "@schemas/vector.schema.js";
 import { embedText } from "./embedding.pipe.js";
-
-function chunkText(
-  text: string,
-  chunkSize: number = 500,
-  overlap: number = 50,
-): string[] {
-  const chunks: string[] = [];
-  let start = 0;
-
-  while (start < text.length) {
-    const end = Math.min(start + chunkSize, text.length);
-
-    const chunk = text.slice(start, end).trim();
-
-    if (chunk.length > 50) {
-      chunks.push(chunk);
-    }
-
-    start += chunkSize - overlap;
-  }
-
-  return chunks;
-}
+import { extractPdfText } from "./pdf.pipe.js";
+import { extractImageContent } from "./image.pipe.js";
 
 export async function ingestDocument(
   filePath: string,
   fileName: string,
   documentId: string,
   mimeType: string,
-) {
-  const parser = new PDFParse({
-    url: filePath,
-  });
-
+): Promise<number> {
   try {
-    const { text } = await parser.getText();
+    let chunks: string[];
 
-    const chunks = chunkText(text);
+    if (mimeType === "application/pdf") {
+      chunks = await extractPdfText(filePath);
+    } else if (mimeType.startsWith("image/")) {
+      const imageContent = await extractImageContent(filePath);
+
+      chunks = [imageContent];
+    } else {
+      throw new Error(`Unsupported file type for RAG ingestion: ${mimeType}`);
+    }
+
+    if (chunks.length === 0) {
+      throw new Error(`No content extracted from ${fileName}.`);
+    }
 
     console.info(`Processing ${chunks.length} chunks from ${fileName}`);
 
-    for (let index = 0; index <= chunks.length; index++) {
+    for (let index = 0; index < chunks.length; index++) {
       const chunk = chunks[index];
 
-      if (!chunk) continue;
+      if (!chunk) {
+        continue;
+      }
 
       const embedding = await embedText(chunk);
 
-      await vectorDB.insert(docChunks).values([
-        {
-          id: UUID(),
-          documentId,
-          content: chunk,
-          embedding,
-          metadata: {
-            fileName,
-            mimeType,
-            chunkIndex: index,
-          },
+      console.log("Embedding lengths:", embedding.length);
+
+      await vectorDB.insert(docChunks).values({
+        id: UUID(),
+        documentId,
+        content: chunk,
+        embedding,
+        metadata: {
+          type: mimeType === "application/pdf" ? "pdf" : "image",
+          fileName,
+          mimeType,
+          chunkIndex: index,
         },
-      ]);
+      });
     }
 
     return chunks.length;
   } catch (error) {
-    console.error("Error while ingesting document:", error);
-    throw new Error("Error in ingestion.");
-  } finally {
-    await parser.destroy();
+    console.error(`Error while ingesting document "${fileName}":`, error);
+
+    throw new Error("Error in document ingestion.");
   }
 }
