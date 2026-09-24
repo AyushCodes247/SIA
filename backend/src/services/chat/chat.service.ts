@@ -259,6 +259,13 @@ class ChatService {
         ),
       );
 
+    console.log("ATTACHMENT INPUTS:", attachmentInputs);
+    console.log("DOCUMENT IDS:", documentIds);
+    console.log("USER PUBLIC ID:", userPublicId);
+    console.log("CONVERSATION ID:", conversationId);
+    console.log("RESOLVED DOCUMENTS:", documents);
+    console.log("EXPECTED:", documentIds.length, "FOUND:", documents.length);
+
     if (documents.length !== documentIds.length) {
       throw new AppError(
         "One or more attachments are invalid or not ready.",
