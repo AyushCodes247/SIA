@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { ToolCategory } from "@schemas/tool.schema.js";
 import type { ToolDefinition } from "./tool.type.js";
 
@@ -33,6 +34,7 @@ class ToolRegistery {
       name: tool.name,
       description: tool.description,
       category: tool.category,
+      inputSchema : z.toJSONSchema(tool.inputSchema)
     }));
   }
 }
