@@ -10,6 +10,10 @@ import copyTool from "./tools/fileSystem/copy.tool.js";
 import searchTool from "./tools/fileSystem/search.tool.js";
 import infoTool from "./tools/fileSystem/info.tool.js";
 import contentTool from "./tools/fileSystem/content.tool.js";
+import screenShot from "./tools/desktop/screenshot.tool.js";
+import openApplicationTool from "./tools/desktop/open.tool.js";
+import closeApplcationTool from "./tools/desktop/close.tool.js";
+import keyTool from "./tools/desktop/keyboard.tool.js";
 
 export const registerTools = (): void => {
   toolRegistery.register(readFileTool);
@@ -23,4 +27,8 @@ export const registerTools = (): void => {
   toolRegistery.register(searchTool);
   toolRegistery.register(infoTool);
   toolRegistery.register(contentTool);
+  toolRegistery.register(screenShot);
+  toolRegistery.register(openApplicationTool);
+  toolRegistery.register(closeApplcationTool);
+  toolRegistery.register(keyTool);
 };
