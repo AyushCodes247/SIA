@@ -9,6 +9,8 @@ interface ENV {
   OLLAMA_BASE_URL: string;
   OLLAMA_MODEL: string;
   TAVILY_TOKEN: string;
+  NATIVE_PACKAGE_PATH: string;
+  CORS_ORIGIN: string;
 }
 
 const env: ENV = {
@@ -19,6 +21,8 @@ const env: ENV = {
   OLLAMA_BASE_URL: process.env.OLLAMA_BASE_URL!,
   OLLAMA_MODEL: process.env.OLLAMA_MODEL!,
   TAVILY_TOKEN: process.env.TAVILY_TOKEN!,
+  NATIVE_PACKAGE_PATH: process.env.NATIVE_PACKAGE_PATH!,
+  CORS_ORIGIN: process.env.CORS_ORIGIN!,
 };
 
 export default env;

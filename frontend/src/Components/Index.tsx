@@ -1,188 +1,277 @@
-import { useState } from "react";
-import voiceEngine from "../Engines/voices/voice.engine";
+import {
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
-const VoiceTest = () => {
-  const [status, setStatus] = useState("idle");
-  const [transcript, setTranscript] = useState("");
-  const [interimTranscript, setInterimTranscript] = useState("");
-  const [error, setError] = useState<string | null>(null);
+import visionEngine from "../Engines/visions/vision.engine";
 
-  const startListening = () => {
-    setError(null);
-    setTranscript("");
-    setInterimTranscript("");
+import type {
+  GestureEvent,
+  VisionEvent,
+  VisionStatus,
+} from "../Engines/visions/vision.type";
 
-    voiceEngine.startListening(
-      {
-        language: "en-IN",
-        continuous: false,
-        interimResults: true,
-      },
-      {
-        onStart: () => {
-          console.log("Voice Engine: listening started");
+const VisionTest = () => {
+  const videoRef =
+    useRef<HTMLVideoElement | null>(null);
 
-          setStatus("listening");
+  const [status, setStatus] =
+    useState<VisionStatus>("idle");
+
+  const [pointer, setPointer] = useState({
+    x: 0,
+    y: 0,
+  });
+
+  const [latestGesture, setLatestGesture] =
+    useState<GestureEvent | null>(null);
+
+  const [eventCount, setEventCount] =
+    useState(0);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const start = async () => {
+    const video = videoRef.current;
+
+    if (!video) {
+      return;
+    }
+
+    try {
+      setError(null);
+
+      await visionEngine.start(
+        video,
+        {
+          config: {
+            preferredHand: "right",
+            pointerSmoothing: 0.7,
+            minTrackingConfidence: 0.6,
+            enablePointer: true,
+            enableGestures: true,
+          },
         },
+        {
+          onStatusChange: (
+            nextStatus,
+          ) => {
+            console.log(
+              "Vision status:",
+              nextStatus,
+            );
 
-        onResult: (result) => {
-          console.log("Recognition result:", result);
+            setStatus(nextStatus);
+          },
 
-          if (result.isFinal) {
-            setTranscript(result.transcript);
-            setInterimTranscript("");
+          onEvent: (
+            event: VisionEvent,
+          ) => {
+            setEventCount(
+              (count) => count + 1,
+            );
 
-            console.log("Final transcript:", result.transcript);
-          } else {
-            setInterimTranscript(result.transcript);
-          }
+            if (
+              event.type ===
+              "POINTER_MOVE"
+            ) {
+              setPointer(
+                event.position,
+              );
+            }
+
+            if (
+              event.type === "GESTURE"
+            ) {
+              console.log(
+                "Vision gesture:",
+                event.gesture,
+              );
+
+              setLatestGesture(
+                event.gesture,
+              );
+            }
+          },
+
+          onError: (error) => {
+            console.error(
+              "Vision error:",
+              error,
+            );
+
+            setError(error.message);
+          },
         },
+      );
+    } catch (error) {
+      console.error(
+        "Failed to start vision:",
+        error,
+      );
 
-        onError: (message) => {
-          console.error("Voice Engine recognition error:", message);
-
-          setError(message);
-          setStatus("error");
-        },
-
-        onEnd: () => {
-          console.log("Voice Engine: listening ended");
-
-          setStatus((currentStatus) =>
-            currentStatus === "listening" ? "idle" : currentStatus,
-          );
-        },
-      },
-    );
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Failed to start vision.",
+      );
+    }
   };
 
-  const speakTestResponse = async () => {
-    setError(null);
-    setStatus("processing");
+  const stop = () => {
+    visionEngine.stop();
 
-    await voiceEngine.speak(
-      "Hello! I received your voice input successfully. The Sia voice engine is working correctly.",
-      {
-        language: "en-IN",
-        volume: 1,
-        rate: 1,
-      },
-      {
-        onStart: () => {
-          console.log("Voice Engine: speaking started");
+    setPointer({
+      x: 0,
+      y: 0,
+    });
 
-          setStatus("speaking");
-        },
-
-        onEnd: () => {
-          console.log("Voice Engine: speaking ended");
-
-          setStatus("idle");
-        },
-
-        onError: (message) => {
-          console.error("Voice Engine synthesis error:", message);
-
-          setError(message);
-          setStatus("error");
-        },
-      },
-    );
+    setLatestGesture(null);
+    setEventCount(0);
   };
 
-  const stopEverything = () => {
-    voiceEngine.stop();
-
-    setStatus("idle");
-  };
-
-  const pauseSpeaking = () => {
-    voiceEngine.pauseSpeaking();
-
-    setStatus("paused");
-  };
-
-  const resumeSpeaking = async () => {
-    await voiceEngine.resumeSpeaking();
-
-    setStatus("speaking");
-  };
-
-  const printEngineState = () => {
-    console.log("Voice Engine State:", voiceEngine.getState());
-  };
+  useEffect(() => {
+    return () => {
+      visionEngine.stop();
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-black p-10 text-white">
-      <div className="mx-auto max-w-2xl space-y-6">
-        <h1 className="text-2xl font-semibold">
-          Voice Engine Integration Test
-        </h1>
+      <div className="mx-auto max-w-5xl space-y-6">
 
-        <div className="rounded-lg border border-neutral-800 p-4">
-          <p>
-            Status: <strong>{status}</strong>
+        <div>
+          <h1 className="text-2xl font-semibold">
+            SIA Vision Engine Test
+          </h1>
+
+          <p className="mt-2 text-neutral-400">
+            Status: {status}
           </p>
+        </div>
 
-          <p className="mt-3">Final transcript:</p>
+        <div className="relative aspect-video overflow-hidden rounded-2xl border border-white/10 bg-neutral-950">
 
-          <p className="text-neutral-300">{transcript || "—"}</p>
+          <video
+            ref={videoRef}
+            className="h-full w-full scale-x-[-1] object-cover"
+            playsInline
+            muted
+          />
 
-          <p className="mt-3">Interim transcript:</p>
+          <div
+            className="pointer-events-none absolute h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white"
+            style={{
+              left: `${pointer.x * 100}%`,
+              top: `${pointer.y * 100}%`,
+            }}
+          />
 
-          <p className="text-neutral-500">{interimTranscript || "—"}</p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+
+          <div className="rounded-xl border border-white/10 p-5">
+            <p className="text-sm text-neutral-500">
+              Pointer X
+            </p>
+
+            <p className="mt-2 text-xl">
+              {pointer.x.toFixed(3)}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 p-5">
+            <p className="text-sm text-neutral-500">
+              Pointer Y
+            </p>
+
+            <p className="mt-2 text-xl">
+              {pointer.y.toFixed(3)}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 p-5">
+            <p className="text-sm text-neutral-500">
+              Latest Gesture
+            </p>
+
+            <p className="mt-2 text-xl">
+              {latestGesture?.type ??
+                "NONE"}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 p-5">
+            <p className="text-sm text-neutral-500">
+              Gesture Confidence
+            </p>
+
+            <p className="mt-2 text-xl">
+              {latestGesture
+                ? latestGesture.confidence.toFixed(
+                    3,
+                  )
+                : "NONE"}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 p-5">
+            <p className="text-sm text-neutral-500">
+              Event Count
+            </p>
+
+            <p className="mt-2 text-xl">
+              {eventCount}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-white/10 p-5">
+            <p className="text-sm text-neutral-500">
+              Hand
+            </p>
+
+            <p className="mt-2 text-xl">
+              {latestGesture?.hand ??
+                "NONE"}
+            </p>
+          </div>
+
         </div>
 
         {error && (
-          <div className="rounded-lg bg-red-950 p-4 text-red-300">{error}</div>
+          <div className="rounded-xl border border-red-500/20 p-4 text-red-300">
+            {error}
+          </div>
         )}
 
-        <div className="flex flex-wrap gap-3">
+        <div className="flex gap-3">
+
           <button
-            onClick={startListening}
-            className="rounded-lg bg-white px-4 py-2 text-black"
+            onClick={start}
+            disabled={
+              status === "starting" ||
+              status === "tracking"
+            }
+            className="rounded-lg bg-white px-5 py-2 text-black disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Start Listening
+            Start Vision
           </button>
 
           <button
-            onClick={speakTestResponse}
-            className="rounded-lg border border-neutral-700 px-4 py-2"
+            onClick={stop}
+            className="rounded-lg border border-red-500/30 px-5 py-2 text-red-300"
           >
-            Speak Test Response
+            Stop Vision
           </button>
 
-          <button
-            onClick={pauseSpeaking}
-            className="rounded-lg border border-neutral-700 px-4 py-2"
-          >
-            Pause
-          </button>
-
-          <button
-            onClick={resumeSpeaking}
-            className="rounded-lg border border-neutral-700 px-4 py-2"
-          >
-            Resume
-          </button>
-
-          <button
-            onClick={stopEverything}
-            className="rounded-lg border border-red-900 px-4 py-2 text-red-300"
-          >
-            Stop
-          </button>
-
-          <button
-            onClick={printEngineState}
-            className="rounded-lg border border-neutral-700 px-4 py-2"
-          >
-            Print State
-          </button>
         </div>
+
       </div>
     </div>
   );
 };
 
-export default VoiceTest;
+export default VisionTest;

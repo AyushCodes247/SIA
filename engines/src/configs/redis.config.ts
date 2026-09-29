@@ -13,15 +13,15 @@ const redis = new Redis({
 });
 
 redis.on("connect", (): void => {
-  console.info("MCP Redis connected successfully.");
+  console.info("ENGINE Redis connected successfully.");
 });
 
 redis.on("ready", (): void => {
-  console.info("MCP Redis is ready.");
+  console.info("ENGINE Redis is ready.");
 });
 
 redis.on("error", (error: unknown) => {
-  console.error(`Redis connection Error: ${error}`);
+  console.error(`ENGINE redis connection Error: ${error}`);
 });
 
 export default redis;
