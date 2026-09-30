@@ -55,7 +55,9 @@ export type GestureType =
   | "PINCH_HOLD"
   | "PINCH_END"
   | "SWIPE_LEFT"
-  | "SWIPE_RIGHT";
+  | "SWIPE_RIGHT"
+  | "SWIPE_DOWN"
+  | "SWIPE_UP";
 
 export interface GestureEvent {
   type: GestureType;

@@ -79,6 +79,8 @@ class VisionEngine {
       ...options.config,
     };
 
+    console.log("Vision config:", this.config);
+
     this.cameraOptions = options.camera ?? {};
 
     this.trackingOptions = options.tracking ?? {};
@@ -236,14 +238,22 @@ class VisionEngine {
     try {
       const hands = trackingService.detect(videoElement);
 
+      console.log("Tracked Hand:", hands);
+
       const hand = this.selectHand(hands);
+
+      console.log("Selected Hand:", hand);
 
       if (hand) {
         if (this.config.enablePointer) {
+          console.log("Pointer processing Enabled.");
+
           this.processPointer(hand);
         }
 
         if (this.config.enableGestures) {
+          console.log("Gesture processing enabled");
+
           this.processGestures(hand);
         }
       }
@@ -269,15 +279,21 @@ class VisionEngine {
       this.pointerOptions,
     );
 
+    console.log("Pointer position:", position);
+
     if (!position) {
       return;
     }
 
-    this.emit({
+    const event: VisionEvent = {
       type: "POINTER_MOVE",
       position,
       timestamp: performance.now(),
-    });
+    };
+
+    console.log("Emitting vision event:", event);
+
+    this.emit(event);
   }
 
   private processGestures(hand: TrackedHand): void {

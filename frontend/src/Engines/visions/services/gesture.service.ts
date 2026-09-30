@@ -3,7 +3,6 @@ import type { GestureEvent, HandLandmarks, TrackedHand } from "../vision.type";
 export interface GestureOptions {
   pinchStartThreshold?: number;
   pinchEndThreshold?: number;
-
   clickMaxDuration?: number;
 
   swipeMinDistance?: number;
@@ -12,11 +11,13 @@ export interface GestureOptions {
 }
 
 const DEFAULT_GESTURE_OPTIONS: Required<GestureOptions> = {
-  pinchStartThreshold: 0.045,
-  pinchEndThreshold: 0.065,
+  pinchStartThreshold: 0.035,
+  pinchEndThreshold: 0.055,
+
   clickMaxDuration: 250,
+
   swipeMinDistance: 0.18,
-  swipeMaxDuration: 400,
+  swipeMaxDuration: 500,
   swipeCooldown: 700,
 };
 
@@ -28,8 +29,11 @@ interface PositionSample {
 
 class GestureService {
   private isPinching = false;
+
   private pinchStartedAt: number | null = null;
+
   private positionHistory: PositionSample[] = [];
+
   private lastSwipeAt = 0;
 
   detect(
@@ -63,11 +67,8 @@ class GestureService {
 
   reset(): void {
     this.isPinching = false;
-
     this.pinchStartedAt = null;
-
     this.positionHistory = [];
-
     this.lastSwipeAt = 0;
   }
 
@@ -83,18 +84,16 @@ class GestureService {
     const events: GestureEvent[] = [];
 
     const thumbTip = hand.landmarks[4];
-
     const indexTip = hand.landmarks[8];
 
     if (!thumbTip || !indexTip) {
       return events;
     }
 
-    const distance = this.distance(thumbTip, indexTip);
+    const distance = this.distance2D(thumbTip, indexTip);
 
     if (!this.isPinching && distance <= config.pinchStartThreshold) {
       this.isPinching = true;
-
       this.pinchStartedAt = timestamp;
 
       events.push({
@@ -131,7 +130,6 @@ class GestureService {
         startedAt !== null ? timestamp - startedAt : Number.POSITIVE_INFINITY;
 
       this.isPinching = false;
-
       this.pinchStartedAt = null;
 
       events.push({
@@ -159,15 +157,15 @@ class GestureService {
     timestamp: number,
     config: Required<GestureOptions>,
   ): GestureEvent | null {
-    const wrist = hand.landmarks[0];
+    const indexTip = hand.landmarks[8];
 
-    if (!wrist) {
+    if (!indexTip) {
       return null;
     }
 
     this.positionHistory.push({
-      x: wrist.x,
-      y: wrist.y,
+      x: indexTip.x,
+      y: indexTip.y,
       timestamp,
     });
 
@@ -177,7 +175,7 @@ class GestureService {
       (sample) => sample.timestamp >= cutoff,
     );
 
-    if (this.positionHistory.length < 2) {
+    if (this.positionHistory.length < 3) {
       return null;
     }
 
@@ -186,7 +184,6 @@ class GestureService {
     }
 
     const first = this.positionHistory[0];
-
     const last = this.positionHistory[this.positionHistory.length - 1];
 
     if (!first || !last) {
@@ -194,31 +191,43 @@ class GestureService {
     }
 
     const deltaX = last.x - first.x;
-
     const deltaY = last.y - first.y;
 
     const horizontalMovement = Math.abs(deltaX);
-
     const verticalMovement = Math.abs(deltaY);
 
-    if (horizontalMovement < config.swipeMinDistance) {
+    const dominantMovement = Math.max(horizontalMovement, verticalMovement);
+
+    if (dominantMovement < config.swipeMinDistance) {
       return null;
     }
 
-    if (horizontalMovement <= verticalMovement * 1.5) {
-      return null;
+    if (horizontalMovement > verticalMovement) {
+      if (horizontalMovement < verticalMovement * 1.5) {
+        return null;
+      }
+    } else {
+      if (verticalMovement < horizontalMovement * 1.5) {
+        return null;
+      }
     }
 
     this.lastSwipeAt = timestamp;
 
     this.positionHistory = [];
 
-    const type = deltaX > 0 ? "SWIPE_RIGHT" : "SWIPE_LEFT";
+    let type: "SWIPE_LEFT" | "SWIPE_RIGHT" | "SWIPE_UP" | "SWIPE_DOWN";
+
+    if (horizontalMovement > verticalMovement) {
+      type = deltaX > 0 ? "SWIPE_RIGHT" : "SWIPE_LEFT";
+    } else {
+      type = deltaY > 0 ? "SWIPE_DOWN" : "SWIPE_UP";
+    }
 
     return {
       type,
       confidence: this.calculateSwipeConfidence(
-        horizontalMovement,
+        dominantMovement,
         config.swipeMinDistance,
       ),
       hand: hand.side,
@@ -226,12 +235,11 @@ class GestureService {
     };
   }
 
-  private distance(first: HandLandmarks, second: HandLandmarks): number {
+  private distance2D(first: HandLandmarks, second: HandLandmarks): number {
     const dx = first.x - second.x;
     const dy = first.y - second.y;
-    const dz = first.z - second.z;
 
-    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    return Math.sqrt(dx * dx + dy * dy);
   }
 
   private calculatePinchConfidence(

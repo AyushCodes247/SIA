@@ -18,7 +18,7 @@ class TrackingService {
   private lastVideoTime = -1;
 
   async initialize(options: TrackingOptions = {}): Promise<void> {
-    if (!this.initialized && this.handLandmarker) {
+    if (this.initialized && this.handLandmarker) {
       return;
     }
 
@@ -71,14 +71,19 @@ class TrackingService {
       throw new Error("Hand tracking has not been initialized.");
     }
 
+    console.log("Tracking video state:", {
+      readyState: videoElement.readyState,
+      currentTime: videoElement.currentTime,
+      videoWidth: videoElement.videoWidth,
+      videoHeight: videoElement.videoHeight,
+    });
+
     if (videoElement.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) {
+      console.log("Tracking skipped: video has no current data.");
+
       return [];
     }
 
-    /*
-     * Avoid processing the exact same video frame more
-     * than once.
-     */
     if (videoElement.currentTime === this.lastVideoTime) {
       return [];
     }
@@ -86,6 +91,11 @@ class TrackingService {
     this.lastVideoTime = videoElement.currentTime;
 
     const result = this.handLandmarker.detectForVideo(videoElement, timestamp);
+
+    console.log("MediaPipe result:", {
+      landmarks: result.landmarks.length,
+      handedness: result.handedness.length,
+    });
 
     return this.mapResult(result);
   }

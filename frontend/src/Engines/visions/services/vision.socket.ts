@@ -29,7 +29,24 @@ class VisionSocketService {
   }
 
   emit(event: VisionEvent): void {
-    if (!this.socket?.connected) return;
+    console.log("VISION EMIT CALLED:", event);
+
+    if (!this.socket) {
+      console.warn("Vision event not sent: socket does not exist.");
+      return;
+    }
+
+    console.log("Socket state:", {
+      id: this.socket.id,
+      connected: this.socket.connected,
+    });
+
+    if (!this.socket.connected) {
+      console.warn("Vision event not sent: socket is not connected.");
+      return;
+    }
+
+    console.log("EMITTING vision:event:", event);
 
     this.socket.emit("vision:event", event);
   }

@@ -29,17 +29,32 @@ const VisionSocketBridge = ({
 
         await visionEngine.start(
           videoElement,
-          {},
           {
-            onEvent: (event) => {
-              if (!cancelled) {
-                visionSocket.emit(event);
-              }
+            pointer: {
+              mirrorX: true,
             },
-            onError: (error) => {
-              if (!cancelled) {
-                console.error("Vision engine error:", error);
+          },
+          {
+            onStatusChange: (status) => {
+              if (cancelled) {
+                return;
               }
+
+              console.log("Vision status:", status);
+            },
+
+            onEvent: (event) => {
+              console.log("VISION ENGINE EVENT:", event);
+
+              visionSocket.emit(event);
+            },
+
+            onError: (error) => {
+              if (cancelled) {
+                return;
+              }
+
+              console.error("Vision engine error:", error);
             },
           },
         );
@@ -59,11 +74,11 @@ const VisionSocketBridge = ({
     return () => {
       cancelled = true;
 
+      visionSocket.disconnect();
+
       if (visionEngine.isRunning()) {
         visionEngine.stop();
       }
-
-      visionSocket.disconnect();
     };
   }, [cameraId, serverUrl]);
 
