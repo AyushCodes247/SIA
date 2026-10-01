@@ -1,15 +1,13 @@
-import mouseService from "./src/engines/tool/tools/desktop/mouse.service";
+import toolEngine from "./src/engines/tool/tool.engine";
+import { registerTools } from "./src/engines/tool/bootstrap.tool";
 
-const screen = await mouseService.getScreenSize();
+registerTools();
 
-console.log("Screen:", screen);
+const result = await toolEngine.execute({
+  query: "Show me the current Git status.",
+  context: {
+    workingDirectory: process.cwd(),
+  },
+});
 
-await mouseService.move(0.5, 0.5);
-
-console.log("Mouse moved.");
-
-await mouseService.click("left");
-
-console.log("Clicked.");
-
-mouseService.stop();
+console.dir(result, { depth: null, colors: true });

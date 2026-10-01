@@ -14,6 +14,8 @@ import screenShot from "./tools/desktop/screenshot.tool.js";
 import openApplicationTool from "./tools/desktop/open.tool.js";
 import closeApplcationTool from "./tools/desktop/close.tool.js";
 import keyTool from "./tools/desktop/keyboard.tool.js";
+import terminalTool from "./tools/terminal/terminal.tool.js";
+import gitStatusTool from "./tools/git/status.tool.js";
 
 export const registerTools = (): void => {
   toolRegistery.register(readFileTool);
@@ -31,4 +33,6 @@ export const registerTools = (): void => {
   toolRegistery.register(openApplicationTool);
   toolRegistery.register(closeApplcationTool);
   toolRegistery.register(keyTool);
+  toolRegistery.register(terminalTool);
+  toolRegistery.register(gitStatusTool);
 };
