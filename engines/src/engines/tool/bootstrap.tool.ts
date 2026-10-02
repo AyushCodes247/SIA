@@ -16,6 +16,9 @@ import closeApplcationTool from "./tools/desktop/close.tool.js";
 import keyTool from "./tools/desktop/keyboard.tool.js";
 import terminalTool from "./tools/terminal/terminal.tool.js";
 import gitStatusTool from "./tools/git/status.tool.js";
+import gitBranchTool from "./tools/git/branch.tool.js";
+import gitCommit from "./tools/git/commit.tool.js";
+import gitStage from "./tools/git/add.tool.js";
 
 export const registerTools = (): void => {
   toolRegistery.register(readFileTool);
@@ -35,4 +38,7 @@ export const registerTools = (): void => {
   toolRegistery.register(keyTool);
   toolRegistery.register(terminalTool);
   toolRegistery.register(gitStatusTool);
+  toolRegistery.register(gitBranchTool);
+  toolRegistery.register(gitCommit);
+  toolRegistery.register(gitStage);
 };

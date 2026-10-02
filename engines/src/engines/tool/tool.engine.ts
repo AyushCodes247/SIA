@@ -37,23 +37,33 @@ class ToolEngine {
       throw new Error("No tools are registered.");
     }
 
-    const response = await ollamaService.chat([
+    const response = await ollamaService.chat(
+      [
+        {
+          role: "system",
+          content: TOOL_SYSTEM_PROMPT(availableTools),
+        },
+        {
+          role: "user",
+          content: query,
+        },
+      ],
+      "json",
       {
-        role: "system",
-        content: TOOL_SYSTEM_PROMPT(availableTools),
+        temperature: 0,
+        num_predict: 1024,
       },
-      {
-        role: "user",
-        content: query,
-      },
-    ]);
+    );
 
     const rawOutput = response.message.content;
+
+    console.log("Raw Output:", rawOutput);
 
     let parsedOutput: unknown;
 
     try {
       parsedOutput = JSON.parse(rawOutput);
+      console.log("Parsed JSON:", parsedOutput);
     } catch (error) {
       console.error("Tool engine JSON parsing failed:", error);
 
