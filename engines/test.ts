@@ -4,7 +4,7 @@ import { registerTools } from "./src/engines/tool/bootstrap.tool";
 registerTools();
 
 const result = await toolEngine.execute({
-  query: "Stage all the file and Commit with the message 'git tool are under development'.",
+  query: "Commit all the file with the message 'Testing git tools'. in current working directory",
   context: {
     workingDirectory: process.cwd(),
   },

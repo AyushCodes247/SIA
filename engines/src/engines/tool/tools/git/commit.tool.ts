@@ -28,7 +28,7 @@ const commitTool: ToolDefinition<CommitInput, CommitOutput> = {
 
   async execute(input, context) {
     try {
-      if (context.workingDirectory) {
+      if (!context.workingDirectory) {
         return {
           success: false,
           error: "Working directory is not defined.",
