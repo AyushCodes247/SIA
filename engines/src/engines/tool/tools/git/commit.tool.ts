@@ -17,7 +17,7 @@ interface CommitOutput {
 }
 
 const commitTool: ToolDefinition<CommitInput, CommitOutput> = {
-  name: "commit",
+  name: "git_commit",
 
   description:
     "Creates a Git commit from the currently staged changes inside the current working directory.",

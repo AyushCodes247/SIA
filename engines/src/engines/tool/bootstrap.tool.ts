@@ -20,6 +20,17 @@ import gitBranchTool from "./tools/git/branch.tool.js";
 import gitCommit from "./tools/git/commit.tool.js";
 import gitStage from "./tools/git/add.tool.js";
 import gitPush from "./tools/git/push.tool.js";
+import gitLog from "./tools/git/log.tool.js";
+import gitCheckout from "./tools/git/checkout.tool.js";
+import gitFetch from "./tools/git/fetch.tool.js";
+import gitCreate from "./tools/git/createBranch.tool.js";
+import gitDiff from "./tools/git/diff.tool.js";
+import gitPull from "./tools/git/pull.tool.js";
+import gitMerge from "./tools/git/merge.tool.js";
+import gitStash from "./tools/git/stash.tool.js";
+import gitShow from "./tools/git/show.tool.js";
+import gitRemote from "./tools/git/remote.tool.js";
+import gitRestore from "./tools/git/restore.tool.js";
 
 export const registerTools = (): void => {
   toolRegistery.register(readFileTool);
@@ -43,4 +54,15 @@ export const registerTools = (): void => {
   toolRegistery.register(gitCommit);
   toolRegistery.register(gitStage);
   toolRegistery.register(gitPush);
+  toolRegistery.register(gitLog);
+  toolRegistery.register(gitCheckout);
+  toolRegistery.register(gitFetch);
+  toolRegistery.register(gitCreate);
+  toolRegistery.register(gitDiff);
+  toolRegistery.register(gitPull);
+  toolRegistery.register(gitMerge);
+  toolRegistery.register(gitStash);
+  toolRegistery.register(gitShow);
+  toolRegistery.register(gitRemote);
+  toolRegistery.register(gitRestore);
 };
