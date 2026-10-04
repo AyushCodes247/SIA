@@ -63,9 +63,11 @@ class OllamaService {
       stream: false,
       messages,
       think: false,
+
       ...(format !== undefined && {
         format,
       }),
+
       ...(options !== undefined && {
         options,
       }),

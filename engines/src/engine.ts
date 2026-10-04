@@ -10,6 +10,11 @@ import WebEngine from "@engines/web.engine.js";
 import { webSchema } from "@schemas/web.schema.js";
 import MemoryEngine from "@engines/memory.engine.js";
 import { memorySchema } from "@schemas/memory.schema.js";
+import ExplainEngine from "@engines/explain.engine.js";
+import AnalyzeEngine from "@engines/analyze.engine.js";
+import ReviewEngine from "@engines/review.engine.js";
+import reviewDiffEngine from "@engines/reviewDiff.engine.js";
+import dependenciesEngine from "@engines/dependencies.engine.js";
 
 const transports = new Map<string, StreamableHTTPServerTransport>();
 
@@ -30,6 +35,90 @@ function mcpServerInit() {
     },
     async ({ query }) => {
       const result = await classifierEngine.classify(query);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "project_dependencies_engine",
+    {
+      description:
+        "Analyzes project dependencies for package type, purpose, health, risks, configuration concerns, and maintenance recommendations.",
+
+      inputSchema: {
+        dependencyInfo: z.string().min(1),
+      },
+    },
+    async ({ dependencyInfo }) => {
+      const result = await dependenciesEngine.analyze(dependencyInfo);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "project_review_engine",
+    {
+      description:
+        "Reviews project code, files, components, or project context for correctness, code quality, security, performance, maintainability, error handling, and testing concerns.",
+      inputSchema: {
+        content: z.string().min(1),
+      },
+    },
+    async ({ content }) => {
+      const result = await ReviewEngine.review(content);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "analyze_engine",
+    {
+      description:
+        "Analyzes project structure, architecture, code quality, performance, security, maintainability, testing, and configuration using project explanation context.",
+
+      inputSchema: {
+        projectContext: z.object({
+          summary: z.string(),
+          purpose: z.string(),
+          components: z.array(
+            z.object({
+              name: z.string(),
+              type: z.string(),
+              purpose: z.string(),
+            }),
+          ),
+          flow: z.array(z.string()),
+          dependencies: z.array(z.string()),
+          importantDetails: z.array(z.string()),
+        }),
+      },
+    },
+    async ({ projectContext }) => {
+      const result = await AnalyzeEngine.analyze(projectContext);
 
       return {
         content: [
@@ -108,6 +197,30 @@ function mcpServerInit() {
   );
 
   server.registerTool(
+    "review_diff_engine",
+    {
+      description:
+        "Reviews a Git diff and identifies correctness, security, performance, maintainability, error handling, testing, and architectural issues introduced by the changes.",
+
+      inputSchema: {
+        diff: z.string().min(1),
+      },
+    },
+    async ({ diff }) => {
+      const result = await reviewDiffEngine.reviewDiff(diff);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
     "answering_engine",
     {
       description:
@@ -152,6 +265,30 @@ function mcpServerInit() {
         messages,
         context,
       });
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "explain_engine",
+    {
+      description:
+        "Explains project code, files, or components for SIA project analysis.",
+      inputSchema: {
+        content: z.string().min(1),
+        path: z.string().optional(),
+      },
+    },
+    async ({ content, path }) => {
+      const result = await ExplainEngine.explain({ content, path });
 
       return {
         content: [
