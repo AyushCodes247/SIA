@@ -15,6 +15,10 @@ import AnalyzeEngine from "@engines/analyze.engine.js";
 import ReviewEngine from "@engines/review.engine.js";
 import reviewDiffEngine from "@engines/reviewDiff.engine.js";
 import dependenciesEngine from "@engines/dependencies.engine.js";
+import errorEngine from "@engines/error.engine.js";
+import packageEngine from "@engines/package.engine.js";
+import testEngine from "@engines/test.engine.js";
+import buildEngine from "@engines/build.engine.js";
 
 const transports = new Map<string, StreamableHTTPServerTransport>();
 
@@ -35,6 +39,102 @@ function mcpServerInit() {
     },
     async ({ query }) => {
       const result = await classifierEngine.classify(query);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "build_diagnostic_engine",
+    {
+      description:
+        "Analyzes build execution results, identifies build status, build tool, errors, warnings, and recommendations.",
+
+      inputSchema: {
+        buildInfo: z.string().min(1),
+      },
+    },
+    async ({ buildInfo }) => {
+      const result = await buildEngine.analyze(buildInfo);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "tests_diagnostic_engine",
+    {
+      description:
+        "Analyzes test execution results, identifies test status, failures, test runner information, statistics, and recommendations.",
+
+      inputSchema: {
+        testInfo: z.string().min(1),
+      },
+    },
+    async ({ testInfo }) => {
+      const result = await testEngine.analyze(testInfo);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "package_diagnostic_engine",
+    {
+      description:
+        "Analyzes package configuration, package metadata, scripts, package type, configuration issues, risks, and recommendations.",
+
+      inputSchema: {
+        packageInfo: z.string().min(1),
+      },
+    },
+    async ({ packageInfo }) => {
+      const result = await packageEngine.analyze(packageInfo);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "error_diagnostic_engine",
+    {
+      description:
+        "Diagnoses runtime, build, compile, dependency, database, network, API, authentication, authorization, filesystem, configuration, logic, and performance errors using evidence from the provided error information.",
+
+      inputSchema: {
+        errorInfo: z.string().min(1),
+      },
+    },
+    async ({ errorInfo }) => {
+      const result = await errorEngine.diagnose(errorInfo);
 
       return {
         content: [
