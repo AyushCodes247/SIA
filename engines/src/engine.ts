@@ -19,6 +19,7 @@ import errorEngine from "@engines/error.engine.js";
 import packageEngine from "@engines/package.engine.js";
 import testEngine from "@engines/test.engine.js";
 import buildEngine from "@engines/build.engine.js";
+import codingEngine from "@engines/coding.engine.js";
 
 const transports = new Map<string, StreamableHTTPServerTransport>();
 
@@ -39,6 +40,30 @@ function mcpServerInit() {
     },
     async ({ query }) => {
       const result = await classifierEngine.classify(query);
+
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(result),
+          },
+        ],
+      };
+    },
+  );
+
+  server.registerTool(
+    "coding_engine",
+    {
+      description:
+        "Generates structured software implementations from coding requests and project context, including affected files, complete file contents, tests, migrations, configuration changes, risks, and validation steps.",
+
+      inputSchema: {
+        request: z.string().min(1),
+      },
+    },
+    async ({ request }) => {
+      const result = await codingEngine.generate(request);
 
       return {
         content: [
